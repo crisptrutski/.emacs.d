@@ -40,13 +40,16 @@
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
 (defun kill-whitespace ()
-          "Kill the whitespace between two non-whitespace characters"
-          (interactive "*")
-          (save-excursion
-            (save-restriction
-              (save-match-data
-                (progn
-                  (re-search-backward "[^ \t\r\n]" nil t)
-                  (re-search-forward "[ \t\r\n]+" nil t)
-                  (replace-match "" nil nil))))))
+  "Kill the whitespace between two non-whitespace characters"
+  (interactive "*")
+  (save-excursion
+    (save-restriction
+      (save-match-data
+        (prognm
+          (re-search-backward "[^ \t\r\n]" nil t)
+          (re-search-forward "[ \t\r\n]+" nil t)
+          (replace-match "" nil nil))))))
+
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
+
+(require 'expectations-mode)
