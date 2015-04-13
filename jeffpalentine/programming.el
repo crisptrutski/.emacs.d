@@ -1,15 +1,18 @@
 (require 'align-cljlet)
-(require 'datomic-snippets)
-(require 'clj-refactor)
+;;(require 'datomic-snippets)
+;;(require 'clj-refactor)
 (add-hook 'clojure-mode-hook
           (lambda ()
-            (clj-refactor-mode 1)
-            (cljr-add-keybindings-with-prefix "s-r")))
+            ;(clj-refactor-mode 1)
+            ;(cljr-add-keybindings-with-prefix "s-r")
+            ))
 
 (add-hook 'clojure-mode-hook
- (lambda ()
-  (font-lock-add-keywords nil '(("\\<\\(FIXME\\|TODO\\|BUG\\|spy/d\\|spy/p\\|spy/t\\)" 1
-                                 font-lock-warning-face t)))))
+          (lambda ()
+            (font-lock-add-keywords nil '(("\\<\\(FIXME\\|TODO\\|BUG\\|spy/d\\|spy/p\\|spy/t\\)" 1
+                                           font-lock-warning-face t)))))
+
+(add-to-list 'auto-mode-alist '("\\.boot\\'" . clojure-mode))
 
 (defun magit-commit-mode-init ()
   (when (looking-at "\n")
@@ -33,7 +36,7 @@
                               ("nr-t5" "9984")
                               ("nr-prod" "9995")))
 
-(yas-global-mode 1)
+;(yas-global-mode 1)
 
 (setq-default whitespace-line-column 90)
 (global-whitespace-mode 1)

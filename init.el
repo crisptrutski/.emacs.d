@@ -22,15 +22,24 @@
                       ;; Project navigation
                       projectile
                       ack-and-a-half
+                      ag ;; prefer to ack
                       ;; Misc.
                       undo-tree
                       markdown-mode
                       color-theme-sanityinc-tomorrow
                       hlinum
                       powerline
-                      clj-refactor
-                      datomic-snippets
-                      yasnippet
+
+                      ;; fixup ag, lein, etc
+                      exec-path-from-shell
+
+                      ;; yasnippet is a bitch (slows down load, it's huge. but a
+                      ;; dep for these cool guys)
+
+                      ;;clj-refactor
+                      ;;datomic-snippets
+                      ;;yasnippet
+
                       buffer-move
                       align-cljlet
                       color-identifiers-mode
@@ -53,8 +62,6 @@
 (mapc 'load (directory-files (concat user-emacs-directory user-login-name)
                              t "^[^#].*el$"))
 
-(yas-global-mode 1)
-
 (global-set-key (kbd "<M-s-right>") 'buf-move-right)
 (global-set-key (kbd "<M-s-left>") 'buf-move-left)
 (global-set-key (kbd "<M-s-up>") 'buf-move-up)
@@ -76,6 +83,9 @@
   ;; build-ins
   (add-watch 'defun)
 
+  (returning 1)
+  (pending 1)
+
   (GET 2)
   (POST 2)
   (PUT 2)
@@ -96,20 +106,43 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector [default bold shadow italic underline bold bold-italic bold])
- '(ansi-color-names-vector (vector "#cccccc" "#f2777a" "#99cc99" "#ffcc66" "#6699cc" "#cc99cc" "#66cccc" "#2d2d2d"))
+ '(ansi-color-faces-vector
+   [default bold shadow italic underline bold bold-italic bold])
+ '(ansi-color-names-vector
+   (vector "#cccccc" "#f2777a" "#99cc99" "#ffcc66" "#6699cc" "#cc99cc" "#66cccc" "#2d2d2d"))
  '(auto-save-default nil)
  '(backup-inhibited t t)
  '(cider-buffer-name-show-port t)
- '(custom-enabled-themes (quote (sanityinc-tomorrow-eighties)))
- '(custom-safe-themes (quote ("628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" default)))
+ '(custom-enabled-themes (quote (sanityinc-tomorrow-night)))
+ '(custom-safe-themes
+   (quote
+    ("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" default)))
  '(delete-selection-mode t)
  '(fci-rule-color "#393939")
  '(magit-emacsclient-executable "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient")
  '(nrepl-host "localhost")
  '(nrepl-port "9991")
  '(vc-annotate-background nil)
- '(vc-annotate-color-map (quote ((20 . "#f2777a") (40 . "#f99157") (60 . "#ffcc66") (80 . "#99cc99") (100 . "#66cccc") (120 . "#6699cc") (140 . "#cc99cc") (160 . "#f2777a") (180 . "#f99157") (200 . "#ffcc66") (220 . "#99cc99") (240 . "#66cccc") (260 . "#6699cc") (280 . "#cc99cc") (300 . "#f2777a") (320 . "#f99157") (340 . "#ffcc66") (360 . "#99cc99"))))
+ '(vc-annotate-color-map
+   (quote
+    ((20 . "#f2777a")
+     (40 . "#f99157")
+     (60 . "#ffcc66")
+     (80 . "#99cc99")
+     (100 . "#66cccc")
+     (120 . "#6699cc")
+     (140 . "#cc99cc")
+     (160 . "#f2777a")
+     (180 . "#f99157")
+     (200 . "#ffcc66")
+     (220 . "#99cc99")
+     (240 . "#66cccc")
+     (260 . "#6699cc")
+     (280 . "#cc99cc")
+     (300 . "#f2777a")
+     (320 . "#f99157")
+     (340 . "#ffcc66")
+     (360 . "#99cc99"))))
  '(vc-annotate-very-old-color nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -122,7 +155,10 @@
  '(show-paren-match ((((class color) (min-colors 89)) (:background "#d7d7ff")))))
 
 
-(set-face-attribute 'default t :font "Menlo Regular-12")
+;(set-face-attribute 'default nil
+                    ;:family "Inconsolata" :height 145 :weight 'normal)
+;;(set-face-attribute 'default t :family "Menlo Regular")
+(set-default-font "Menlo")
 
 ;; (set-frame-parameter (selected-frame) 'alpha '(97 50))
 ;; (add-to-list 'default-frame-alist '(alpha 97 50))
@@ -137,3 +173,34 @@
 
 
 (global-set-key (kbd "<M-f5>") 'nrepl-reset)
+
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize)
+  (setenv "PATH" (concat "/Users/jeffpalentine/bin:" (getenv "PATH"))))
+
+
+
+(defun toggle-window-split ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+	     (next-win-buffer (window-buffer (next-window)))
+	     (this-win-edges (window-edges (selected-window)))
+	     (next-win-edges (window-edges (next-window)))
+	     (this-win-2nd (not (and (<= (car this-win-edges)
+					 (car next-win-edges))
+				     (<= (cadr this-win-edges)
+					 (cadr next-win-edges)))))
+	     (splitter
+	      (if (= (car this-win-edges)
+		     (car (window-edges (next-window))))
+		  'split-window-horizontally
+		'split-window-vertically)))
+	(delete-other-windows)
+	(let ((first-win (selected-window)))
+	  (funcall splitter)
+	  (if this-win-2nd (other-window 1))
+	  (set-window-buffer (selected-window) this-win-buffer)
+	  (set-window-buffer (next-window) next-win-buffer)
+	  (select-window first-win)
+	  (if this-win-2nd (other-window 1))))))
