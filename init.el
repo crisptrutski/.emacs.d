@@ -13,7 +13,6 @@
                       starter-kit-bindings
                       starter-kit-js
                       starter-kit-lisp
-                      ;; Clojure & friends
                       clojure-mode
                       cider
                       ;;expectations-mode (brings in nrepl, woes)
@@ -22,36 +21,37 @@
                       ;; Project navigation
                       projectile
                       ack-and-a-half
-                      ag ;; prefer to ack
-                      ;; Misc.
+                      ag
                       undo-tree
                       markdown-mode
                       color-theme-sanityinc-tomorrow
                       hlinum
                       powerline
-
+                      ;; autocomplete
+                      auto-complete
+                      company
                       ;; fixup ag, lein, etc
                       exec-path-from-shell
-
-                      ;; yasnippet is a bitch (slows down load, it's huge. but a
-                      ;; dep for these cool guys)
-
-                      ;;clj-refactor
                       ;;datomic-snippets
-                      ;;yasnippet
-
                       buffer-move
                       align-cljlet
                       color-identifiers-mode
                       highlight
+                      ;; show evaluated forms
                       nrepl-eval-sexp-fu
-                      )
+                      cider-eval-sexp-fu)
   "A list of packages to ensure are installed at launch.")
 
 ;; Automaticaly install any missing packages
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
+
+(global-company-mode)
+
+(require 'cider-eval-sexp-fu)
+
+(setq cider-prompt-for-symbol nil)
 
 ;; Load the provided Clojure start kit configurations
 (load (concat user-emacs-directory "clojure-starter-kit.el"))
@@ -62,30 +62,28 @@
 (mapc 'load (directory-files (concat user-emacs-directory user-login-name)
                              t "^[^#].*el$"))
 
-(global-set-key (kbd "<M-s-right>") 'buf-move-right)
-(global-set-key (kbd "<M-s-left>") 'buf-move-left)
-(global-set-key (kbd "<M-s-up>") 'buf-move-up)
-(global-set-key (kbd "<M-s-down>") 'buf-move-down)
-
 (define-clojure-indent
-  (defroutes 'defun)
-  (for-map 'defun)
+  ;; storm
   (nextTuple 'defun)
   (ack 'defun)
   (fail 'defun)
-
-  ;; om stuff
+  ;; om
   (div 'defun)
   (ul 'defun)
   (li 'defun)
   (button 'defun)
-
   ;; build-ins
   (add-watch 'defun)
-
+  ;; custom
+  (for-map 'defun)
   (returning 1)
   (pending 1)
-
+  ;; re-frame
+  (register-sub 'defun)
+  (register-handler 'defun)
+  (register-base 'defun)
+  ;; compojure
+  (defroutes 'defun)
   (GET 2)
   (POST 2)
   (PUT 2)
@@ -116,7 +114,7 @@
  '(custom-enabled-themes (quote (sanityinc-tomorrow-night)))
  '(custom-safe-themes
    (quote
-    ("4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" default)))
+    ("06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" default)))
  '(delete-selection-mode t)
  '(fci-rule-color "#393939")
  '(magit-emacsclient-executable "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient")
@@ -155,52 +153,17 @@
  '(show-paren-match ((((class color) (min-colors 89)) (:background "#d7d7ff")))))
 
 
-;(set-face-attribute 'default nil
-                    ;:family "Inconsolata" :height 145 :weight 'normal)
+;;(set-face-attribute 'default nil
+;;:family "Inconsolata" :height 145 :weight 'normal)
 ;;(set-face-attribute 'default t :family "Menlo Regular")
 (set-default-font "Menlo")
 
 ;; (set-frame-parameter (selected-frame) 'alpha '(97 50))
 ;; (add-to-list 'default-frame-alist '(alpha 97 50))
 
-;; 'My workflow reloaded' / clojure
-(defun nrepl-reset ()
-  (interactive)
-  (set-buffer "*cider-repl dev*")
-  (goto-char (point-max))
-  (insert "(user/reset)")
-  (cider-repl-return))
-
-
-(global-set-key (kbd "<M-f5>") 'nrepl-reset)
-
 (when (memq window-system '(mac ns))
   (exec-path-from-shell-initialize)
   (setenv "PATH" (concat "/Users/jeffpalentine/bin:" (getenv "PATH"))))
 
-
-
-(defun toggle-window-split ()
-  (interactive)
-  (if (= (count-windows) 2)
-      (let* ((this-win-buffer (window-buffer))
-	     (next-win-buffer (window-buffer (next-window)))
-	     (this-win-edges (window-edges (selected-window)))
-	     (next-win-edges (window-edges (next-window)))
-	     (this-win-2nd (not (and (<= (car this-win-edges)
-					 (car next-win-edges))
-				     (<= (cadr this-win-edges)
-					 (cadr next-win-edges)))))
-	     (splitter
-	      (if (= (car this-win-edges)
-		     (car (window-edges (next-window))))
-		  'split-window-horizontally
-		'split-window-vertically)))
-	(delete-other-windows)
-	(let ((first-win (selected-window)))
-	  (funcall splitter)
-	  (if this-win-2nd (other-window 1))
-	  (set-window-buffer (selected-window) this-win-buffer)
-	  (set-window-buffer (next-window) next-win-buffer)
-	  (select-window first-win)
-	  (if this-win-2nd (other-window 1))))))
+(global-set-key (kbd "C-0") 'ace-jump-char-mode)
+;; (global-set-key (kbd "C-U") 'ace-jump-mode-pop-mark)

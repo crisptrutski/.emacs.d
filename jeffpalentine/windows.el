@@ -1,6 +1,58 @@
+(defun toggle-window-split ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+             (next-win-buffer (window-buffer (next-window)))
+             (this-win-edges (window-edges (selected-window)))
+             (next-win-edges (window-edges (next-window)))
+             (this-win-2nd (not (and (<= (car this-win-edges)
+                                         (car next-win-edges))
+                                     (<= (cadr this-win-edges)
+                                         (cadr next-win-edges)))))
+             (splitter
+              (if (= (car this-win-edges)
+                     (car (window-edges (next-window))))
+                  'split-window-horizontally
+                'split-window-vertically)))
+        (delete-other-windows)
+        (let ((first-win (selected-window)))
+          (funcall splitter)
+          (if this-win-2nd (other-window 1))
+          (set-window-buffer (selected-window) this-win-buffer)
+          (set-window-buffer (next-window) next-win-buffer)
+          (select-window first-win)
+          (if this-win-2nd (other-window 1))))))
+
+;; rewrite scrolling defaults to half screen
+;; (awful, from http://www.emacswiki.org/emacs/HalfScrolling)
+
+(defun window-half-height ()
+  (max 1 (/ (1- (window-height (selected-window))) 2)))
+
+(defun scroll-up-half ()
+  (interactive)
+  (scroll-up (window-half-height)))
+
+(defun scroll-down-half ()
+  (interactive)
+  (scroll-down (window-half-height)))
+
+(global-set-key [next] 'scroll-up-half)
+(global-set-key [prior] 'scroll-down-half)
+
+
+;; remap for atreus
+(global-set-key (kbd "<M-s-right>") 'buf-move-right)
+(global-set-key (kbd "<M-s-left>") 'buf-move-left)
+(global-set-key (kbd "<M-s-up>") 'buf-move-up)
+(global-set-key (kbd "<M-s-down>") 'buf-move-down)
+
+
+;; remainder stuff.. not sure where I got it, but seems very buggy
+
 (defun win-resize-top-or-bot ()
   "Figure out if the current window is on top, bottom or in the
-middle"
+   middle"
   (let* ((win-edges (window-edges))
 	 (this-window-y-min (nth 1 win-edges))
 	 (this-window-y-max (nth 3 win-edges))
@@ -12,7 +64,7 @@ middle"
 
 (defun win-resize-left-or-right ()
   "Figure out if the current window is to the left, right or in the
-middle"
+   smiddle"
   (let* ((win-edges (window-edges))
 	 (this-window-x-min (nth 0 win-edges))
 	 (this-window-x-max (nth 2 win-edges))
@@ -62,5 +114,4 @@ middle"
                                  (not (window-dedicated-p window))))
        "Window '%s' is dedicated"
      "Window '%s' is normal")
-   (current-buffer)))
-
+   ( current-buffer)))
